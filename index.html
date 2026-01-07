@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Личный аккаунт</title>
-
+    <title>Личный акант | Абие</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
     <style>
         * {
             margin: 0;
@@ -423,11 +421,14 @@ body {
             inset 0 1px 0 rgba(255, 255, 255, 0.05);
     }
 }
+
     </style>
 </head>
 <body>
 
-<div class="container">
+   
+
+    <div class="container">
         <div class="header-container">
             <div class="user-profile" id="user-profile">
                 <div class="user-avatar" id="user-avatar">
@@ -446,55 +447,56 @@ body {
         </div>
         <!-- Bottom Navigation -->
         <nav class="bottom-nav">
-            <a href="index.html" class="nav-item">
+            <a href="index.html" class="nav-item active">
             <img src="ic_home.svg" alt="Home">
             <span>Home</span>
             </a>
 
-            <a href="Services.html" class="nav-item active">
+            <a href="Services.html" class="nav-item">
             <img src="ic_servisec.svg" alt="Services">
             <span>Services</span>
             </a>
         </nav>
-<footer>
-    <p>Mini App | Абие Studio</p>
-</footer>
 
-<script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
+        <footer>
+            <p>Mini App | Абие Studio</p>
+        </footer>
+    </div>
 
-    const avatarEl = document.getElementById('avatar');
-    const nameEl = document.getElementById('name');
-    const usernameEl = document.getElementById('username');
+    <script>
+const tg = window.Telegram.WebApp;
+tg.expand();
 
+function updateUserProfile() {
     const user = tg.initDataUnsafe.user;
 
-    if (user) {
-        const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
-        nameEl.textContent = fullName || 'Пользователь';
+    const avatar = document.getElementById('user-avatar');
+    const name = document.getElementById('user-name');
+    const status = document.getElementById('user-status');
 
-        if (user.username) {
-            usernameEl.textContent = '@' + user.username;
-        } else {
-            usernameEl.textContent = 'Telegram';
-        }
-
-        if (user.photo_url) {
-            avatarEl.innerHTML = `<img src="${user.photo_url}" alt="avatar">`;
-        } else {
-            avatarEl.textContent = (user.first_name || 'U')[0].toUpperCase();
-        }
+    if (!user) {
+        name.textContent = 'Откройте через Telegram';
+        status.textContent = 'Mini App';
+        return;
     }
 
-    document.getElementById('profile-card').addEventListener('click', () => {
-        if (user) {
-            tg.showAlert(
-                `👤 ${user.first_name || ''} ${user.last_name || ''}\n` +
-                (user.username ? '@' + user.username : '')
-            );
-        }
-    });
+    const displayName = user.first_name || user.username || 'Пользователь';
+    name.textContent = displayName;
+
+    if (user.username) {
+        status.textContent = '@' + user.username;
+    } else {
+        status.textContent = 'Telegram';
+    }
+
+    if (user.photo_url) {
+        avatar.innerHTML = `<img src="${user.photo_url}">`;
+    } else {
+        avatar.textContent = displayName[0].toUpperCase();
+    }
+}
+
+window.addEventListener('load', updateUserProfile);
 </script>
 
 </body>
