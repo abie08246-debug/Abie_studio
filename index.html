@@ -349,85 +349,81 @@
         }
 
         /* ===== Bottom Navigation | iOS 26 Liquid Glass ===== */
-.bottom-nav {
-    position: fixed;
-    bottom: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: calc(100% - 24px);
-    max-width: 420px;
+        .bottom-nav {
+            position: fixed;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 24px);
+            max-width: 420px;
 
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
 
-    padding: 10px 0;
-    border-radius: 28px;
+            padding: 10px 0;
+            border-radius: 28px;
 
-    background: rgba(255, 255, 255, 0.55);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
 
-    box-shadow:
-        0 8px 30px rgba(0, 0, 0, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            box-shadow:
+            0 8px 30px rgba(0, 0, 0, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6);
 
-    z-index: 1000;
-}
+            z-index: 1000;
+        }
 
-.nav-item {
-    flex: 1;
-    text-align: center;
-    text-decoration: none;
+        .nav-item {
+            flex: 1;
+            text-align: center;
+            text-decoration: none;
 
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
 
-    color: var(--tg-theme-hint-color, #707579);
-    font-size: 12px;
-    font-weight: 500;
+            color: var(--tg-theme-hint-color, #707579);
+            font-size: 12px;
+            font-weight: 500;
 
-    transition: all 0.25s ease;
-}
+            transition: all 0.25s ease;
+        }
 
-.nav-item img {
-    width: 22px;
-    height: 22px;
-    opacity: 0.7;
-}
+        .nav-item img {
+            width: 22px;
+            height: 22px;
+            opacity: 0.7;
+        }
 
-.nav-item.active {
-    color: var(--tg-theme-button-color, #9f11e0);
-}
+        .nav-item.active {
+            color: var(--tg-theme-button-color, #9f11e0);
+        }
 
-.nav-item.active img {
-    opacity: 1;
-    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.25));
-}
+        .nav-item.active img {
+            opacity: 1;
+            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.25));
+        }
 
-/* Отступ снизу, чтобы контент не перекрывался */
-body {
-    padding-bottom: 90px;
-}
+        /* Отступ снизу, чтобы контент не перекрывался */
+        body {
+            padding-bottom: 90px;
+        }
 
-/* Тёмная тема */
-@media (prefers-color-scheme: dark) {
-    .bottom-nav {
-        background: rgba(30, 30, 30, 0.6);
-        box-shadow:
-            0 8px 30px rgba(0, 0, 0, 0.6),
-            inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        /* Тёмная тема */
+            @media (prefers-color-scheme: dark) {
+        .bottom-nav {
+            background: rgba(30, 30, 30, 0.6);
+            box-shadow:
+                0 8px 30px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
     }
-}
-
-    </style>
+</style>
 </head>
 <body>
-
-   
-
     <div class="container">
         <div class="header-container">
             <div class="user-profile" id="user-profile">
@@ -440,9 +436,8 @@ body {
                 </div>
             </div>
             
-            
             <div class="app-title">
-                <h1>Сервисы</h1>
+                <h1>Личный кабинет</h1>
             </div>
         </div>
         <!-- Bottom Navigation -->
@@ -464,8 +459,8 @@ body {
     </div>
 
     <script>
-const tg = window.Telegram.WebApp;
-tg.expand();
+    const tg = window.Telegram.WebApp;
+    tg.expand();
 
 function updateUserProfile() {
     const user = tg.initDataUnsafe.user;
@@ -498,6 +493,5 @@ function updateUserProfile() {
 
 window.addEventListener('load', updateUserProfile);
 </script>
-
 </body>
 </html>
