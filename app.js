@@ -9,55 +9,73 @@
         document.body.style.color = tg.themeParams.text_color || '#000000';
         
         // Обновление профиля пользователя Telegram
+        
         function updateUserProfile() {
-            const user = tg.initDataUnsafe.user;
-            const userProfile = document.getElementById('user-profile');
-            const userAvatar = document.getElementById('user-avatar');
-            const userName = document.getElementById('user-name');
-            const userStatus = document.getElementById('user-status');
-            
-            if (user) {
-                // Имя пользователя
-                const displayName = user.first_name || user.username || 'Пользователь';
-                userName.textContent = displayName;
-                
-                // Аватар пользователя
-                if (user.photo_url) {
-                    userAvatar.innerHTML = `<img src="${user.photo_url}" alt="${displayName}">`;
-                } else {
-                    // Если нет фото, показываем первую букву имени
-                    const firstLetter = displayName.charAt(0).toUpperCase();
-                    userAvatar.textContent = firstLetter;
-                    
-                    // Градиент на основе ID пользователя
-                    const userId = user.id;
-                    const colors = [
-                        ['#667eea', '#764ba2'],
-                        ['#f093fb', '#f5576c'],
-                        ['#4facfe', '#00f2fe'],
-                        ['#43e97b', '#38f9d7'],
-                        ['#fa709a', '#fee140']
-                    ];
-                    const colorIndex = userId % colors.length;
-                    userAvatar.style.background = `linear-gradient(135deg, ${colors[colorIndex][0]}, ${colors[colorIndex][1]})`;
-                }
-                
-                // Статус (если есть last_name, показываем фамилию)
-                if (user.last_name) {
-                    userStatus.textContent = user.last_name;
-                } else if (user.username) {
-                    userStatus.textContent = `@${user.username}`;
-                } else {
-                    userStatus.textContent = 'Telegram';
-                }
-                
-                // Показываем профиль
-                userProfile.style.display = 'flex';
-            } else {
-                // Если данные пользователя недоступны
-                userProfile.style.display = 'flex'; // Все равно показываем, но с дефолтными значениями
-            }
-        }
+    if (!window.Telegram || !window.Telegram.WebApp) {
+        console.warn('Telegram WebApp недоступен');
+        return;
+    }
+
+    const tg = window.Telegram.WebApp;
+    const user = tg.initDataUnsafe?.user;
+
+    const userProfile = document.getElementById('user-profile');
+    const userAvatar = document.getElementById('user-avatar');
+    const userName = document.getElementById('user-name');
+    const userStatus = document.getElementById('user-status');
+
+    // 🔹 Fallback (если открыто вне Telegram)
+    if (!user) {
+        userName.textContent = 'Гость';
+        userStatus.textContent = 'Telegram Mini App';
+        userAvatar.textContent = '👤';
+        userProfile.style.display = 'flex';
+        return;
+    }
+
+    const displayName =
+        user.first_name ||
+        user.username ||
+        'Пользователь';
+
+    userName.textContent = displayName;
+
+    // 🔹 Аватар
+    userAvatar.innerHTML = '';
+    userAvatar.style.background = '';
+
+    if (user.photo_url) {
+        const img = document.createElement('img');
+        img.src = user.photo_url;
+        img.alt = displayName;
+        userAvatar.appendChild(img);
+    } else {
+        userAvatar.textContent = displayName.charAt(0).toUpperCase();
+
+        const colors = [
+            ['#667eea', '#764ba2'],
+            ['#f093fb', '#f5576c'],
+            ['#4facfe', '#00f2fe'],
+            ['#43e97b', '#38f9d7'],
+            ['#fa709a', '#fee140']
+        ];
+        const colorIndex = user.id % colors.length;
+        userAvatar.style.background =
+            `linear-gradient(135deg, ${colors[colorIndex][0]}, ${colors[colorIndex][1]})`;
+    }
+
+    // 🔹 Статус
+    if (user.username) {
+        userStatus.textContent = `@${user.username}`;
+    } else if (user.last_name) {
+        userStatus.textContent = user.last_name;
+    } else {
+        userStatus.textContent = 'Telegram';
+    }
+
+    userProfile.style.display = 'flex';
+}
+
         
         // API ключ для OpenWeatherMap
         const API_KEY = '71b79eb28b25abb409de841a1ff76818';
@@ -231,31 +249,9 @@
         });
         
         // Инициализация при загрузке
-        window.addEventListener('load', () => {
-            // Обновляем профиль пользователя
+        Telegram.WebApp.ready();
             updateUserProfile();
-            
-            // Загружаем погоду для Москвы по умолчанию
-            // Автоматически определяем местоположение
-            getUserLocation();
 
-            
-            // Фокусируем поле ввода
-            setTimeout(() => {
-                cityInput.focus();
-            }, 500);
-            
-            // Настройка клавиатуры Telegram
-            if (tg.platform !== 'unknown') {
-                tg.MainButton.hide();
-                tg.BackButton.hide();
-            }
-            
-            // Показываем кнопку "Назад" если есть история
-            if (history.length > 1) {
-                tg.BackButton.show();
-            }
-        });
         
         // Обработка кнопки "Назад" в Telegram
         tg.onEvent('backButtonClicked', () => {
