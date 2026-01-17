@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Погода в Telegram</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header-container">
+            <div class="user-profile" id="user-profile">
+                <div class="user-avatar" id="user-avatar">
+                    <!-- Аватар будет вставлен через JS -->
+                </div>
+                <div class="user-info">
+                    <div class="user-name" id="user-name">Пользователь</div>
+                    <div class="user-status" id="user-status">online</div>
+                </div>
+            </div>
+            
+            <div class="app-title">
+                <h1>🌤️ Погода</h1>
+                <p class="subtitle">Узнайте текущую погоду в любом городе</p>
+            </div>
+        </div>
+        
+        
+        
+        <div class="search-container">
+            <input type="text" id="city-input" placeholder="Введите город...">
+            <button id="search-btn">Найти</button>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Загрузка данных о погоде...</p>
+        </div>
+        
+        <div class="error-message" id="error-message">
+            Город не найден. Проверьте название и попробуйте снова.
+        </div>
+        
+        <div class="weather-card" id="weather-card">
+            <div class="current-weather">
+                <div class="weather-info">
+                    <h2 class="city-name" id="city-name">Город</h2>
+                    <p class="weather-description" id="weather-description">Описание</p>
+                    <div class="temperature" id="temperature">0°C</div>
+                </div>
+                <img class="weather-icon" id="weather-icon" src="" alt="Погода">
+            </div>
+            
+            <div class="weather-details">
+                <div class="detail-item">
+                    <div class="detail-label">Ощущается</div>
+                    <div class="detail-value" id="feels-like">0°C</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Влажность</div>
+                    <div class="detail-value" id="humidity">0%</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Давление</div>
+                    <div class="detail-value" id="pressure">0 hPa</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Ветер</div>
+                    <div class="detail-value" id="wind-speed">0 м/с</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Видимость</div>
+                    <div class="detail-value" id="visibility">0 км</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Восход</div>
+                    <div class="detail-value" id="sunrise">00:00</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Закат</div>
+                    <div class="detail-value" id="sunset">00:00</div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Данные предоставлены Абие Studio</p>
+        </footer>
+    </div>
+    <script src="telegram-webapp.js"></script>
+
+    <script>
+        // ================================
+// Weather Application Logic
+// ================================
+
+// API ключ для OpenWeatherMap
+const API_KEY = '71b79eb28b25abb409de841a1ff76818';
+
+// Элементы DOM
+const cityInput = document.getElementById('city-input');
+const searchBtn = document.getElementById('search-btn');
+const weatherCard = document.getElementById('weather-card');
+const errorMessage = document.getElementById('error-message');
+const loading = document.getElementById('loading');
+
+// Элементы для отображения данных
+const cityName = document.getElementById('city-name');
+const weatherDescription = document.getElementById('weather-description');
+const temperature = document.getElementById('temperature');
+const weatherIcon = document.getElementById('weather-icon');
+const feelsLike = document.getElementById('feels-like');
+const humidity = document.getElementById('humidity');
+const pressure = document.getElementById('pressure');
+const windSpeed = document.getElementById('wind-speed');
+const visibility = document.getElementById('visibility');
+const sunrise = document.getElementById('sunrise');
+const sunset = document.getElementById('sunset');
+
+// Показать/скрыть загрузку
+function showLoading(show) {
+    loading.style.display = show ? 'block' : 'none';
+    if (show) {
+        weatherCard.style.display = 'none';
+        errorMessage.style.display = 'none';
+    }
+}
+
+// Функция для получения погоды по городу
+async function getWeatherData(city) {
+    showLoading(true);
+    
+    try {
+        const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric&lang=ru`;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error('Город не найден');
+        }
+        
+        const data = await response.json();
+        updateWeatherUI(data);
+        showLoading(false);
+        weatherCard.style.display = 'block';
+        
+    } catch (error) {
+        showLoading(false);
+        errorMessage.style.display = 'block';
+        weatherCard.style.display = 'none';
+        console.error('Ошибка:', error);
+        
+        // Вибрация при ошибке (если поддерживается)
+        if (navigator.vibrate) {
+            navigator.vibrate(200);
+        }
+    }
+}
+
+// Функция для получения погоды по координатам
+async function getWeatherByCoords(lat, lon) {
+    showLoading(true);
+    
+    try {
+        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=ru`;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error('Ошибка получения данных');
+        }
+        
+        const data = await response.json();
+        updateWeatherUI(data);
+        showLoading(false);
+        weatherCard.style.display = 'block';
+        
+    } catch (error) {
+        showLoading(false);
+        errorMessage.textContent = 'Не удалось получить данные о местоположении';
+        errorMessage.style.display = 'block';
+        weatherCard.style.display = 'none';
+    }
+}
+
+// Обновление интерфейса
+function updateWeatherUI(data) {
+    // Основные данные
+    cityName.textContent = `${data.name}, ${data.sys.country}`;
+    weatherDescription.textContent = data.weather[0].description;
+    temperature.textContent = `${Math.round(data.main.temp)}°C`;
+    
+    // Иконка погоды
+    const iconCode = data.weather[0].icon;
+    weatherIcon.src = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+    weatherIcon.alt = data.weather[0].description;
+    
+    // Дополнительные данные
+    feelsLike.textContent = `${Math.round(data.main.feels_like)}°C`;
+    humidity.textContent = `${data.main.humidity}%`;
+    pressure.textContent = `${data.main.pressure} hPa`;
+    windSpeed.textContent = `${data.wind.speed} м/с`;
+    visibility.textContent = `${(data.visibility / 1000).toFixed(1)} км`;
+    
+    // Время восхода и закат
+    const sunriseTime = new Date(data.sys.sunrise * 1000);
+    const sunsetTime = new Date(data.sys.sunset * 1000);
+    
+    sunrise.textContent = `${sunriseTime.getHours().toString().padStart(2, '0')}:${sunriseTime.getMinutes().toString().padStart(2, '0')}`;
+    sunset.textContent = `${sunsetTime.getHours().toString().padStart(2, '0')}:${sunsetTime.getMinutes().toString().padStart(2, '0')}`;
+    
+    // Изменяем цвет температуры в зависимости от значения
+    const temp = data.main.temp;
+    if (temp > 25) {
+        temperature.style.color = '#ff6b6b'; // Тепло
+    } else if (temp < 0) {
+        temperature.style.color = '#74b9ff'; // Холодно
+    } else {
+        temperature.style.color = 'var(--tg-theme-text-color, #000000)';
+    }
+}
+
+// Получение местоположения пользователя
+function getUserLocation() {
+    if (!navigator.geolocation) {
+        errorMessage.textContent = 'Геолокация не поддерживается вашим браузером';
+        errorMessage.style.display = 'block';
+        return;
+    }
+    
+    showLoading(true);
+    
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const { latitude, longitude } = position.coords;
+            getWeatherByCoords(latitude, longitude);
+        },
+        (error) => {
+            showLoading(false);
+            errorMessage.textContent = 'Не удалось получить местоположение. Разрешите доступ к геолокации.';
+            errorMessage.style.display = 'block';
+            console.error('Ошибка геолокации:', error);
+        },
+        { timeout: 10000 }
+    );
+}
+
+// Обработчики событий
+function initWeatherApp() {
+    // Обработчик кнопки поиска
+    searchBtn.addEventListener('click', () => {
+        const city = cityInput.value.trim();
+        if (city) {
+            getWeatherData(city);
+            cityInput.blur(); // Скрываем клавиатуру на мобильных устройствах
+        }
+    });
+    
+    // Обработчик Enter в поле ввода
+    cityInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const city = cityInput.value.trim();
+            if (city) {
+                getWeatherData(city);
+                cityInput.blur();
+            }
+        }
+    });
+    
+    // Фокусируем поле ввода при загрузке
+    setTimeout(() => {
+        cityInput.focus();
+    }, 500);
+}
+
+// Инициализация погодного приложения
+function initWeatherApplication() {
+    // Загружаем погоду по местоположению по умолчанию
+    getUserLocation();
+    
+    // Инициализируем обработчики событий
+    initWeatherApp();
+}
+    </script>
+</body>
+</html>
