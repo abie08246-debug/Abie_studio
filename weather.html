@@ -322,20 +322,30 @@
             }
         });
         
-        // Инициализация при загрузке
-        window.addEventListener('load', () => {
-            // Обновляем профиль пользователя
-            updateUserProfile();
-            
-            // Загружаем погоду для Москвы по умолчанию
-            // Автоматически определяем местоположение
-            getUserLocation();
-
-            
-            // Фокусируем поле ввода
-            setTimeout(() => {
-                cityInput.focus();
-            }, 500);
+       window.addEventListener('load', () => {
+    // Обновляем профиль пользователя
+    updateUserProfile();
+    
+    // ВСЕГДА показываем кнопку "Назад" в Telegram Mini App
+    if (tg.platform !== 'unknown') {
+        tg.BackButton.show(); // Показываем кнопку "Назад"
+        
+        // Устанавливаем обработчик для кнопки "Назад"
+        tg.BackButton.onClick(() => {
+            // Переходим на страницу сервисов
+            window.location.href = 'Services.html';
+        });
+        
+        tg.MainButton.hide();
+    }
+    
+    // Загружаем погоду для местоположения пользователя
+    getUserLocation();
+    
+    // Фокусируем поле ввода
+    setTimeout(() => {
+        cityInput.focus();
+    }, 500);
             
             // Настройка клавиатуры Telegram
             if (tg.platform !== 'unknown') {
