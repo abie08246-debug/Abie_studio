@@ -2,11 +2,12 @@
 class ShakeDetector {
     constructor() {
         this.threshold = 15; // Минимальная сила встряхивания
-        this.timeout = 1000; // Задержка между обнаружением встряхиваний
+        this.timeout = 2000; // Задержка между обнаружением встряхиваний (2 секунды)
         this.lastShake = 0;
         this.lastX = null;
         this.lastY = null;
         this.lastZ = null;
+        this.isEffectActive = false;
         
         this.init();
     }
@@ -19,6 +20,20 @@ class ShakeDetector {
         } else {
             this.startDetection();
         }
+        
+        // Предзагрузка изображения
+        this.preloadImage();
+    }
+
+    preloadImage() {
+        const img = new Image();
+        img.src = 'Стекло1.png';
+        img.onload = () => {
+            console.log('Изображение разбитого стекла загружено');
+        };
+        img.onerror = () => {
+            console.error('Ошибка загрузки изображения разбитого стекла');
+        };
     }
 
     async requestPermission() {
@@ -27,10 +42,22 @@ class ShakeDetector {
             if (permission === 'granted') {
                 this.startDetection();
             } else {
-                console.log('Разрешение на доступ к акселерометру не предоставлено');
+                this.showPermissionDeniedMessage();
             }
         } catch (error) {
             console.error('Ошибка при запросе разрешения:', error);
+        }
+    }
+
+    showPermissionDeniedMessage() {
+        const info = document.querySelector('.shake-info');
+        if (info) {
+            info.innerHTML = `
+                <p>⚠️ <strong>Разрешение не предоставлено</strong></p>
+                <p style="font-size: 14px; margin-top: 8px; opacity: 0.8;">
+                    Для работы функции встряхивания необходимо разрешить доступ к датчикам движения
+                </p>
+            `;
         }
     }
 
@@ -39,7 +66,19 @@ class ShakeDetector {
             window.addEventListener('devicemotion', this.handleMotion.bind(this));
             console.log('Детектор встряхивания активирован');
         } else {
-            console.warn('DeviceMotion не поддерживается');
+            this.showNotSupportedMessage();
+        }
+    }
+
+    showNotSupportedMessage() {
+        const info = document.querySelector('.shake-info');
+        if (info) {
+            info.innerHTML = `
+                <p>📱 <strong>Функция не поддерживается</strong></p>
+                <p style="font-size: 14px; margin-top: 8px; opacity: 0.8;">
+                    Ваше устройство не поддерживает датчики движения
+                </p>
+            `;
         }
     }
 
@@ -47,7 +86,7 @@ class ShakeDetector {
         const acceleration = event.accelerationIncludingGravity;
         const currentTime = Date.now();
         
-        if ((currentTime - this.lastShake) > this.timeout) {
+        if ((currentTime - this.lastShake) > this.timeout && !this.isEffectActive) {
             const x = acceleration.x;
             const y = acceleration.y;
             const z = acceleration.z;
@@ -74,80 +113,124 @@ class ShakeDetector {
     onShakeDetected() {
         console.log('📱 Обнаружено встряхивание!');
         this.showGlassBreakEffect();
+        
+        // Вибрация (если поддерживается)
+        if (navigator.vibrate) {
+            navigator.vibrate([100, 50, 100]);
+        }
     }
 
     showGlassBreakEffect() {
+        if (this.isEffectActive) return;
+        
+        this.isEffectActive = true;
         const effect = document.getElementById('glass-break-effect');
         const homeNav = document.getElementById('home-nav');
         const servicesNav = document.getElementById('services-nav');
         
-        // Создаем эффект разбитого стекла
-        effect.innerHTML = '';
-        effect.style.display = 'block';
+        // Показываем эффект разбитого стекла
+        effect.style.display = 'flex';
+        effect.classList.add('active');
         
-        // Добавляем трещины на кнопки навигации
-        this.addCracksToElement(homeNav);
-        this.addCracksToElement(servicesNav);
+        // Добавляем эффект на кнопки навигации
+        this.addGlassEffectToElement(homeNav);
+        this.addGlassEffectToElement(servicesNav);
         
-        // Звук разбития стекла (опционально)
+        // Добавляем класс тряски для всего контейнера
+        document.querySelector('.container').classList.add('shake-animation');
+        
+        // Звук разбития стекла
         this.playGlassBreakSound();
         
-        // Убираем эффект через 2 секунды
+        // Скрываем инструкцию
+        const shakeInfo = document.querySelector('.shake-info');
+        if (shakeInfo) {
+            shakeInfo.style.opacity = '0.5';
+        }
+        
+        // Убираем эффект через 1.5 секунды
         setTimeout(() => {
-            effect.style.display = 'none';
-            this.removeCracksFromElement(homeNav);
-            this.removeCracksFromElement(servicesNav);
-        }, 2000);
+            this.hideGlassBreakEffect();
+        }, 1500);
     }
 
-    addCracksToElement(element) {
-        if (!element) return;
+    hideGlassBreakEffect() {
+        const effect = document.getElementById('glass-break-effect');
+        const homeNav = document.getElementById('home-nav');
+        const servicesNav = document.getElementById('services-nav');
+        const container = document.querySelector('.container');
+        const shakeInfo = document.querySelector('.shake-info');
         
-        // Добавляем класс с трещинами
-        element.classList.add('glass-cracked');
+        effect.classList.remove('active');
+        effect.style.display = 'none';
         
-        // Создаем SVG трещин
-        const cracks = document.createElement('div');
-        cracks.className = 'glass-cracks';
-        cracks.innerHTML = `
-            <svg class="crack-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <path d="M10,10 L40,40 L60,20 L90,90" class="crack-line"/>
-                <path d="M30,5 L50,50 L70,30" class="crack-line"/>
-                <path d="M5,60 L40,70 L80,40" class="crack-line"/>
-            </svg>
-        `;
+        this.removeGlassEffectFromElement(homeNav);
+        this.removeGlassEffectFromElement(servicesNav);
         
-        element.appendChild(cracks);
+        if (container) {
+            container.classList.remove('shake-animation');
+        }
+        
+        if (shakeInfo) {
+            shakeInfo.style.opacity = '1';
+        }
+        
+        this.isEffectActive = false;
     }
 
-    removeCracksFromElement(element) {
+    addGlassEffectToElement(element) {
         if (!element) return;
         
-        element.classList.remove('glass-cracked');
-        const cracks = element.querySelector('.glass-cracks');
-        if (cracks) {
-            cracks.remove();
+        element.classList.add('glass-effect-active');
+        
+        // Находим overlay и показываем его
+        const overlay = element.querySelector('.glass-overlay');
+        if (overlay) {
+            overlay.style.opacity = '1';
+            overlay.style.backgroundImage = 'url("Стекло1.png")';
+        }
+    }
+
+    removeGlassEffectFromElement(element) {
+        if (!element) return;
+        
+        element.classList.remove('glass-effect-active');
+        
+        // Скрываем overlay
+        const overlay = element.querySelector('.glass-overlay');
+        if (overlay) {
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+                overlay.style.backgroundImage = 'none';
+            }, 300);
         }
     }
 
     playGlassBreakSound() {
-        // Создаем звук разбития стекла
         try {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
+            const oscillator1 = audioContext.createOscillator();
+            const oscillator2 = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
             
-            oscillator.connect(gainNode);
+            oscillator1.connect(gainNode);
+            oscillator2.connect(gainNode);
             gainNode.connect(audioContext.destination);
             
-            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.3);
+            // Два осциллятора для более реалистичного звука
+            oscillator1.frequency.setValueAtTime(1000, audioContext.currentTime);
+            oscillator1.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.4);
+            
+            oscillator2.frequency.setValueAtTime(1200, audioContext.currentTime);
+            oscillator2.frequency.exponentialRampToValueAtTime(300, audioContext.currentTime + 0.4);
             
             gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
             gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
             
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.5);
+            oscillator1.start(audioContext.currentTime);
+            oscillator2.start(audioContext.currentTime);
+            oscillator1.stop(audioContext.currentTime + 0.5);
+            oscillator2.stop(audioContext.currentTime + 0.5);
         } catch (e) {
             console.log('Аудио контекст не поддерживается');
         }
@@ -156,111 +239,10 @@ class ShakeDetector {
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
-    // Создаем стили для эффекта
-    const style = document.createElement('style');
-    style.textContent = `
-        .glass-break-effect {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at center, transparent 30%, rgba(255,255,255,0.1) 70%);
-            pointer-events: none;
-            z-index: 9999;
-            display: none;
-            animation: glassFlash 0.5s ease-out;
-        }
-        
-        @keyframes glassFlash {
-            0% { opacity: 0; }
-            10% { opacity: 1; background: rgba(255,255,255,0.3); }
-            100% { opacity: 0; }
-        }
-        
-        .glass-cracked {
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .glass-cracked::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255,255,255,0.1);
-            z-index: 1;
-        }
-        
-        .glass-cracks {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 2;
-        }
-        
-        .crack-svg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-        
-        .crack-line {
-            stroke: rgba(255, 255, 255, 0.8);
-            stroke-width: 2;
-            stroke-linecap: round;
-            fill: none;
-            animation: crackAppear 0.3s ease-out forwards;
-        }
-        
-        @keyframes crackAppear {
-            0% { stroke-dasharray: 0, 1000; }
-            100% { stroke-dasharray: 1000, 0; }
-        }
-        
-        .shake-info {
-            text-align: center;
-            padding: 20px;
-            background: var(--tg-theme-secondary-bg-color, #f1f1f1);
-            border-radius: 16px;
-            margin: 20px 0;
-            color: var(--tg-theme-text-color, #000);
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { opacity: 0.7; }
-            50% { opacity: 1; }
-            100% { opacity: 0.7; }
-        }
-        
-        .bottom-nav {
-            z-index: 1000;
-        }
-    `;
-    document.head.appendChild(style);
-    
-    // Инициализируем детектор встряхивания
     const shakeDetector = new ShakeDetector();
     
-    // Добавляем информацию о встряхивании
-    const content = document.querySelector('.content');
-    if (content) {
-        const shakeInfo = document.createElement('div');
-        shakeInfo.className = 'shake-info';
-        shakeInfo.innerHTML = `
-            <p>📱 <strong>Встряхните телефон</strong></p>
-            <p style="font-size: 14px; margin-top: 8px; opacity: 0.8;">
-                чтобы увидеть эффект разбитого стекла на кнопках навигации!
-            </p>
-        `;
-        content.appendChild(shakeInfo);
-    }
+    // Добавляем возможность теста по клику (для десктопной версии)
+    document.querySelector('.shake-info').addEventListener('click', () => {
+        shakeDetector.onShakeDetected();
+    });
 });
